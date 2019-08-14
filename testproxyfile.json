@@ -1,0 +1,6 @@
+{
+	"packages" : {
+		"xlsxd" : "https://github.com/symmetryinvestments/xlsxd.git",
+		"dubproxy" : "."
+	}
+}
