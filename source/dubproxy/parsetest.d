@@ -5,7 +5,6 @@ import std.stdio;
 import dubproxy;
 import dubproxy.git;
 
-
 @safe:
 
 unittest {

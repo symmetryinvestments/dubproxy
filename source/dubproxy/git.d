@@ -14,11 +14,11 @@ struct TagReturn {
 	string tag;
 }
 
-string getHashFromVersion(const(TagRetrun[]) tags, string ver) {
+string getHashFromVersion(const(TagReturn[]) tags, string ver) {
 	import std.algorithm.searching : endsWith;
-	foreach(tag; tags) {
-		if(tags.tag.endsWith(ver)) {
-			return tag.hash;
+	foreach(it; tags) {
+		if(it.tag.endsWith(ver)) {
+			return it.hash;
 		}
 	}
 	return "";
