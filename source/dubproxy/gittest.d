@@ -1,6 +1,7 @@
 module dubproxy.gittest;
 
 import std.stdio;
+import std.format : format;
 
 import dubproxy;
 import dubproxy.git;
@@ -18,6 +19,14 @@ unittest {
 	assert(h == "78623dea2c9706c5622372c69e68df3b4779fb39", h);
 }
 
+unittest {
+	import std.algorithm.searching : canFind, endsWith;
+	DubProxyFile dpf = fromFile("testproxyfile.json");
+	TagReturn[] tags = getTags(dpf.getPath("dubproxy"), TagKind.branch);
+	assert(canFind!(a => a.tag.endsWith("master"))(tags),
+			format("%(%s\n%)", tags));
+}
+
 @safe:
 
 unittest {
@@ -26,7 +35,6 @@ unittest {
 	string xlsxPath = dpf.getPath("udt_d");
 	cloneBare(xlsxPath, LocalGit.no, "CloneTmp/GitDir/udt_d", Override.yes);
 	TagReturn[] tags = getTags(xlsxPath);
-	writefln("%(%s\n%)", tags);
 
 	foreach(tag; tags) {
 		createWorkingTree("CloneTmp/GitDir/udt_d", tag, "udt_d", "CloneTmp",

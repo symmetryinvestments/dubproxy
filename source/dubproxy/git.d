@@ -38,16 +38,38 @@ string getHashFromVersion(const(TagReturn[]) tags, string ver) {
 	return "";
 }
 
+enum TagKind {
+	branch,
+	pull,
+	tags,
+	all
+}
+
 TagReturn[] getTags(string path) {
-	const toExe = format!`git ls-remote --tags --sort="-version:refname" %s`(
-			path);
+	return getTags(path, TagKind.tags);
+}
+
+TagReturn[] getTags(string path, TagKind tk) {
+	import std.algorithm.searching : canFind;
+
+	const toExe = tk == TagKind.tags
+		? format!`git ls-remote --tags --sort="-version:refname" %s`(path)
+		: format!`git ls-remote %s`(path);
+
+	const kindFilter = tk == TagKind.branch ? "heads"
+		: tk == TagKind.pull ? "pull"
+		: tk == TagKind.tags ? "tags" : "";
+
 	auto rslt = executeShell(toExe);
 	enforce(rslt.status == 0, format!
 			"'%s' returned with '%d' 0 was expected output '%s'"(
 			toExe, rslt.status, rslt.output));
 
 	TagReturn[] ret;
-	foreach(line; rslt.output.splitter("\n").filter!(line => !line.empty)) {
+	foreach(line; rslt.output.splitter("\n")
+			.filter!(line => !line.empty)
+			.filter!(line => kindFilter.empty || line.canFind(kindFilter)))
+	{
 		string[] lineSplit = line.split('\t');
 		enforce(lineSplit.length == 2, format!
 				"Line '%s' split incorrectly in '%s'"(line, lineSplit));
