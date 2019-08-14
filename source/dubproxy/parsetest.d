@@ -11,4 +11,5 @@ unittest {
 	DubProxyFile dpf = fromFile("testproxyfile.json");
 	assert("xlsxd" in dpf.packages);
 	assert("dubproxy" in dpf.packages);
+	assert("udt_d" in dpf.packages);
 }

@@ -27,8 +27,6 @@ unittest {
 			format("%(%s\n%)", tags));
 }
 
-@safe:
-
 unittest {
 	DubProxyFile dpf = fromFile("testproxyfile.json");
 
