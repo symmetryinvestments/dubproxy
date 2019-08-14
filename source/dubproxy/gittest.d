@@ -1,5 +1,7 @@
 module dubproxy.gittest;
 
+import std.stdio;
+
 import dubproxy;
 import dubproxy.git;
 
@@ -14,4 +16,20 @@ unittest {
 
 	h = getHashFromVersion(tags, "v0.0.2");
 	assert(h == "78623dea2c9706c5622372c69e68df3b4779fb39", h);
+}
+
+@safe:
+
+unittest {
+	DubProxyFile dpf = fromFile("testproxyfile.json");
+
+	string xlsxPath = dpf.getPath("udt_d");
+	cloneBare(xlsxPath, LocalGit.no, "CloneTmp/GitDir/udt_d", Override.yes);
+	TagReturn[] tags = getTags(xlsxPath);
+	writefln("%(%s\n%)", tags);
+
+	foreach(tag; tags) {
+		createWorkingTree("CloneTmp/GitDir/udt_d", tag, "udt_d", "CloneTmp",
+				Override.yes);
+	}
 }

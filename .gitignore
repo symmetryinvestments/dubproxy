@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/dubproxy
+dubproxy.so
+dubproxy.dylib
+dubproxy.dll
+dubproxy.a
+dubproxy.lib
+dubproxy-test-*
+*.exe
+*.o
+*.obj
+*.lst
