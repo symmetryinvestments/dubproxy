@@ -10,7 +10,5 @@ import dubproxy.git;
 unittest {
 	DubProxyFile dpf = fromFile("testproxyfile.json");
 	assert("xlsxd" in dpf.packages);
-	writeln(getTags(dpf.getPath("xlsxd")));
 	assert("dubproxy" in dpf.packages);
-	writeln(getTags(dpf.getPath("dubproxy")));
 }

@@ -10,5 +10,5 @@ unittest {
 
 	TagReturn[] tags = getTags(dpf.getPath("dubproxy"));
 	string h = getHashFromVersion(tags, "v0.0.1");
-	assert(h == "fc7788b002b468b9f4af1d5dccd94b02712147d1", h);
+	assert(h == "4b9d4852c219e9eb062481f39d67118cfdd66664", h);
 }
