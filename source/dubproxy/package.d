@@ -7,20 +7,33 @@ import std.file : exists, readText;
 import std.exception : enforce;
 import std.stdio;
 
-static import dubproxy.git;
-
 @safe:
 
 struct DubProxyFile {
 	string[string] packages;
 	string pathToGit;
 
-	dubproxy.git.TagReturn[] getTags(const string pkg) const {
+	string getPath(string pkg) const {
 		const string* pkgPath = pkg in this.packages;
-		writeln(pkg);
-		writeln(this.packages);
 		enforce(pkgPath, format!"No package with name '%s' found in DPF"(pkg));
-		return dubproxy.git.getTags(*pkgPath);
+		return *pkgPath;
+	}
+
+	bool pkgExists(string pkg) const {
+		return (pkg in this.packages) !is null;
+	}
+
+	void insertPath(string pkg, string path) {
+		const(string)* oldPath = pkg in this.packages;
+		enforce(oldPath is null, format!"Package '%s' already with path '%s'"(
+					pkg, *oldPath));
+		this.packages[pkg] = path;
+	}
+
+	void removePackage(string pkg) {
+		enforce(this.pkgExists(pkg), format!"Package '%s' does not exist in DPF"(
+				pkg));
+		this.packages.remove(pkg);
 	}
 }
 

@@ -14,8 +14,19 @@ struct TagReturn {
 	string tag;
 }
 
+string getHashFromVersion(const(TagRetrun[]) tags, string ver) {
+	import std.algorithm.searching : endsWith;
+	foreach(tag; tags) {
+		if(tags.tag.endsWith(ver)) {
+			return tag.hash;
+		}
+	}
+	return "";
+}
+
 TagReturn[] getTags(string path) {
-	const toExe = format!"git ls-remote --tags %s"(path);
+	const toExe = format!`git ls-remote --tags --sort="-version:refname" %s`(
+			path);
 	auto rslt = executeShell(toExe);
 	enforce(rslt.status == 0, format!"'%s' returned with '%d' 0 was expected"(
 			toExe, rslt.status));
