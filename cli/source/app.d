@@ -8,8 +8,8 @@ import opts = options;
 int main(string[] args) {
 	auto helpInformation = getopt(args,
 		"m|mirror",
-		"Get a list of packages currently available on code.dlang.org "
-		~ "and store a file specified in \"n|mirrorFileName\"",
+		"Get a list of packages currently available on code.dlang.org"
+		~ "\n\t\t\tand store a file specified in \"n|mirrorFileName\"",
 		&opts.writeAbleOptions().mirrorCodeDlang,
 
 		"n|mirrorFileName",
@@ -33,7 +33,11 @@ int main(string[] args) {
 		&opts.writeAbleOptions().libOptions.ovrWTF,
 
 		"g|get",
-		"Get a precific package",
+		"Get a precific package. \"-g dub\" will fetch dub and create"
+		~ "\n\t\t\tfolders for all version tags for dub. \"-g dub:1.1.0\" will "
+		~ "\n\t\t\ttry to get dub and create a package for v1.1.0. "
+		~ "\n\t\t\t\"g dub:~master\" will try get dub and create a package for "
+		~ "\n\t\t\t~master",
 		&opts.writeAbleOptions().packages,
 
 		"i|proxyFile",
