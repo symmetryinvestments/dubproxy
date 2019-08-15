@@ -2,6 +2,7 @@ module dubproxy.git;
 
 import std.array : empty;
 import std.algorithm.iteration : filter, splitter;
+import std.algorithm.searching : startsWith;
 import std.exception : enforce;
 import std.file : exists, mkdirRecurse, rmdirRecurse, getcwd, chdir, readText;
 import std.path : absolutePath;
@@ -73,6 +74,7 @@ TagReturn[] getTags(string path, TagKind tk, ref const(DubProxyOptions) options)
 	TagReturn[] ret;
 	foreach(line; rslt.output.splitter("\n")
 			.filter!(line => !line.empty)
+			.filter!(line => !canFind(line, "^{}"))
 			.filter!(line => kindFilter.empty || line.canFind(kindFilter)))
 	{
 		string[] lineSplit = line.split('\t');
@@ -109,7 +111,8 @@ void cloneBare(string path, const LocalGit lg, string destDir,
 void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 		string packageName, string destDir, ref const(DubProxyOptions) options)
 {
-	const verTag = tag.getVersion();
+	const ver = tag.getVersion();
+	const verTag = ver.startsWith("v") ? ver[1 .. $] : ver;
 	const absGitPath = absolutePath(clonedGitPath);
 	const absDestDir = absolutePath(destDir);
 	const rsltPath = format!"%s/%s-%s/%s"(absDestDir, packageName, verTag,
@@ -131,7 +134,7 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 			format!"Failed to paths to '%s'"(absGitPath));
 
 	const toExe = format!"%s worktree add -f %s %s"(options.pathToGit, rsltPath,
-			verTag);
+			ver);
 	auto rslt = executeShell(toExe);
 	enforce(rslt.status == 0, format!
 			"'%s' returned with '%d' 0 was expected output '%s'"(
@@ -149,12 +152,13 @@ void insertVersionIntoDubFile(string packageDir, string ver) {
 	const pkgE = exists(pkg);
 	const sdl = format!"%s/dub.sdl"(packageDir);
 	const sdlE = exists(sdl);
+	const cVer = ver.startsWith("v") ? ver[1 .. $] : ver;
 	if(jsE) {
-		inserVersionIntoDubJsonFile(js, ver);
+		inserVersionIntoDubJsonFile(js, cVer);
 	} else if(sdlE) {
-		inserVersionIntoDubSDLFile(sdl, ver);
+		inserVersionIntoDubSDLFile(sdl, cVer);
 	} else if(pkgE) {
-		inserVersionIntoDubJsonFile(pkg, ver);
+		inserVersionIntoDubJsonFile(pkg, cVer);
 	} else {
 		enforce(false, format!"could not find a dub.{json,sdl} file in '%s'"
 				(packageDir));
