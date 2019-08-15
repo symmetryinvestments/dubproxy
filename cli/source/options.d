@@ -8,8 +8,11 @@ struct DubProxyCliOptions {
 	bool mirrorCodeDlang;
 	string mirrorFilename = "code.json";
 	string[] packages;
-	string proxyFile;
+	string proxyFile = "dubproxy.json";
 	string packageFolder;
+
+	bool dummyDubProxy;
+	string dummyDubProxyPath = ".";
 }
 
 private DubProxyCliOptions __options;
