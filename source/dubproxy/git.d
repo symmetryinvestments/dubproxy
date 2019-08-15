@@ -129,6 +129,12 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 	}
 
 	const string cwd = getcwd();
+	scope(exit) {
+		chdir(cwd);
+		enforce(getcwd() == cwd, format!"Failed to paths to '%s' cwd '%s'"(cwd,
+				getcwd()));
+	}
+
 	chdir(absGitPath);
 	enforce(getcwd() == absGitPath,
 			format!"Failed to paths to '%s'"(absGitPath));
@@ -140,12 +146,12 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 			"'%s' returned with '%d' 0 was expected output '%s'"(
 			toExe, rslt.status, rslt.output));
 
-	chdir(cwd);
-	enforce(getcwd() == cwd, format!"Failed to paths to '%s'"(cwd));
-	insertVersionIntoDubFile(rsltPath, verTag);
+	insertVersionIntoDubFile(rsltPath, verTag, options);
 }
 
-void insertVersionIntoDubFile(string packageDir, string ver) {
+void insertVersionIntoDubFile(string packageDir, string ver,
+		ref const(DubProxyOptions) options)
+{
 	const js = format!"%s/dub.json"(packageDir);
 	const jsE = exists(js);
 	const pkg = format!"%s/package.json"(packageDir);
@@ -156,7 +162,7 @@ void insertVersionIntoDubFile(string packageDir, string ver) {
 	if(jsE) {
 		inserVersionIntoDubJsonFile(js, cVer);
 	} else if(sdlE) {
-		inserVersionIntoDubSDLFile(sdl, cVer);
+		inserVersionIntoDubSDLFile(sdl, cVer, options);
 	} else if(pkgE) {
 		inserVersionIntoDubJsonFile(pkg, cVer);
 	} else {
@@ -175,10 +181,23 @@ void inserVersionIntoDubJsonFile(string fileName, string ver) {
 	f.writeln();
 }
 
-void inserVersionIntoDubSDLFile(string fileName, string ver) {
-	string t = readText(fileName);
-	t ~= format!"\nversion \"%s\"\n"(ver);
+void inserVersionIntoDubSDLFile(string fileName, string ver,
+		ref const(DubProxyOptions) options)
+{
+	import std.path : dirName;
+	const pth = dirName(fileName);
+	const string cwd = getcwd();
+	scope(exit) {
+		chdir(cwd);
+	}
+	chdir(pth);
+	const toExe = format!`%s convert --format=json`(options.pathToDub);
 
-	auto f = File(fileName, "w");
-	f.write(t);
+	auto rslt = executeShell(toExe);
+	enforce(rslt.status == 0, format!(
+			"dub failed with code '%s' and output '%s' to convert dub.sdl to "
+			~ "dub.json with cmd '%s'")(rslt.status, rslt.output, toExe));
+
+	const jsFn = pth ~ "/dub.json";
+	inserVersionIntoDubJsonFile(jsFn, ver);
 }

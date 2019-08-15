@@ -45,3 +45,19 @@ unittest {
 				opts);
 	}
 }
+
+unittest {
+	DubProxyOptions opts;
+	opts.ovrGF = OverrideGitFolder.yes;
+	opts.ovrWTF = OverrideWorkTreeFolder.yes;
+	DubProxyFile dpf = fromFile("code.json");
+
+	string xlsxPath = dpf.getPath("colored");
+	cloneBare(xlsxPath, LocalGit.no, "/home/burner/.dub/GitDir/colored", opts);
+	TagReturn[] tags = getTags(xlsxPath, opts);
+
+	foreach(tag; tags) {
+		createWorkingTree("/home/burner/.dub/GitDir/colored", tag, "colored",
+				"/home/burner/.dub/packages", opts);
+	}
+}
