@@ -3,8 +3,7 @@
 		"Robert burner Schadek"
 	],
 	"dependencies": {
-		"dubproxy:lib": "~>0.8.4",
-		"colored" : "==0.0.21"
+		"dubproxy:lib": "~>0.8.4"
 	},
     "subPackages" : [
 		{ "name" : "lib"

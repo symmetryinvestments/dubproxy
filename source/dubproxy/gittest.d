@@ -46,6 +46,7 @@ unittest {
 	}
 }
 
+/*
 unittest {
 	DubProxyOptions opts;
 	opts.ovrGF = OverrideGitFolder.yes;
@@ -60,4 +61,4 @@ unittest {
 		createWorkingTree("/home/burner/.dub/GitDir/colored", tag, "colored",
 				"/home/burner/.dub/packages", opts);
 	}
-}
+}*/
