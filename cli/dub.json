@@ -1,0 +1,19 @@
+{
+	"authors": [
+		"Robert burner Schadek"
+	],
+	"dependencies": {
+		"dubproxy:lib": "~>0.8.4"
+	},
+    "subPackages" : [
+		{ "name" : "lib"
+		, "targetType" : "library"
+		, "sourcePaths": ["../source"]
+		, "importPaths": ["../source"]
+		}
+	],
+	"copyright": "Copyright © 2019, Symmetry Investments",
+	"description": "The cli to the dubproxy library",
+	"license": "GPL3",
+	"name": "dubproxy"
+}

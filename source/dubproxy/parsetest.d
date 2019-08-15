@@ -13,3 +13,10 @@ unittest {
 	assert("dubproxy" in dpf.packages);
 	assert("udt_d" in dpf.packages);
 }
+
+unittest {
+	import std.file : readText;
+	string d = getCodeDlangOrgData();
+	DubProxyFile dpf = parseCodeDlangOrgData(d);
+	toFile(dpf, "code.json");
+}

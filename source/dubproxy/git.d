@@ -11,6 +11,8 @@ import std.process : executeShell;
 import std.typecons : Flag;
 import std.string : split, strip;
 
+import dubproxy.options;
+
 @safe:
 
 struct TagReturn {
@@ -28,7 +30,7 @@ struct TagReturn {
 	}
 }
 
-string getHashFromVersion(const(TagReturn[]) tags, string ver) {
+string getHashFromVersion(const(TagReturn[]) tags, string ver) pure {
 	import std.algorithm.searching : endsWith;
 	foreach(it; tags) {
 		if(it.tag.endsWith(ver)) {
@@ -45,16 +47,19 @@ enum TagKind {
 	all
 }
 
-TagReturn[] getTags(string path) {
-	return getTags(path, TagKind.tags);
+TagReturn[] getTags(string path, ref const(DubProxyOptions) options) {
+	return getTags(path, TagKind.tags, options);
 }
 
-TagReturn[] getTags(string path, TagKind tk) {
+TagReturn[] getTags(string path, TagKind tk, ref const(DubProxyOptions) options)
+{
 	import std.algorithm.searching : canFind;
 
 	const toExe = tk == TagKind.tags
-		? format!`git ls-remote --tags --sort="-version:refname" %s`(path)
-		: format!`git ls-remote %s`(path);
+		? format!`%s ls-remote --tags --sort="-version:refname" %s`(
+				options.pathToGit, path
+			)
+		: format!`%s ls-remote %s`(options.pathToGit, path);
 
 	const kindFilter = tk == TagKind.branch ? "heads"
 		: tk == TagKind.pull ? "pull"
@@ -83,17 +88,17 @@ TagReturn[] getTags(string path, TagKind tk) {
 alias LocalGit = Flag!"LocalGit";
 
 void cloneBare(string path, const LocalGit lg, string destDir,
-		const Override ovr)
+		ref const(DubProxyOptions) options)
 {
 	const bool e = exists(destDir);
-	enforce(!e || ovr == Override.yes, format!(
+	enforce(!e || options.ovrGF == OverrideGitFolder.yes, format!(
 			"Path '%s' exist and override flag was not passed")(destDir));
 
 	if(e) {
 		() @trusted { rmdirRecurse(destDir); }();
 	}
 
-	const toExe = format!`git clone --bare%s %s %s`(
+	const toExe = format!`%s clone --bare%s %s %s`(options.pathToGit,
 			lg == LocalGit.yes ? " -l" : "", path, destDir);
 	auto rslt = executeShell(toExe);
 	enforce(rslt.status == 0, format!
@@ -101,10 +106,8 @@ void cloneBare(string path, const LocalGit lg, string destDir,
 			toExe, rslt.status, rslt.output));
 }
 
-alias Override = Flag!"Override";
-
 void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
-		string packageName, string destDir, Override ovr)
+		string packageName, string destDir, ref const(DubProxyOptions) options)
 {
 	const verTag = tag.getVersion();
 	const absGitPath = absolutePath(clonedGitPath);
@@ -113,7 +116,7 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 			packageName);
 
 	const bool e = exists(rsltPath);
-	enforce(!e || ovr == Override.yes, format!(
+	enforce(!e || options.ovrWTF == OverrideWorkTreeFolder.yes, format!(
 			"Path '%s' exist and override flag was not passed")(rsltPath));
 
 	if(e) {
@@ -124,9 +127,11 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 
 	const string cwd = getcwd();
 	chdir(absGitPath);
-	enforce(getcwd() == absGitPath, format!"Failed to paths to '%s'"(absGitPath));
+	enforce(getcwd() == absGitPath,
+			format!"Failed to paths to '%s'"(absGitPath));
 
-	const toExe = format!"git worktree add -f %s %s"(rsltPath, verTag);
+	const toExe = format!"%s worktree add -f %s %s"(options.pathToGit, rsltPath,
+			verTag);
 	auto rslt = executeShell(toExe);
 	enforce(rslt.status == 0, format!
 			"'%s' returned with '%d' 0 was expected output '%s'"(

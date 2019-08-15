@@ -12,7 +12,6 @@ import std.stdio;
 
 struct DubProxyFile {
 	string[string] packages;
-	string pathToGit;
 
 	string getPath(string pkg) const {
 		const string* pkgPath = pkg in this.packages;
@@ -73,13 +72,6 @@ DubProxyFile fromString(string jsonText) @safe {
 		}
 	}();
 
-	auto gitPath = "gitPath" in j;
-	if(gitPath) {
-		enforce(gitPath.type == JSONType.string, format!
-				"The gitPath must be of type string not '%s'"(gitPath.type));
-		ret.pathToGit = gitPath.str();
-	}
-
 	return ret;
 }
 
@@ -99,14 +91,77 @@ private void toImpl(LTW)(auto ref LTW ltw, const(DubProxyFile) dpf) {
 	import std.algorithm.iteration : map, joiner;
 	import std.algorithm.mutation : copy;
 
-	formattedWrite(ltw, `{\n\t"packages" : {\n`);
+	formattedWrite(ltw, "{\n\t\"packages\" : {\n");
 	dpf.packages.byKeyValue()
-		.map!(it => format!`\t\t"%s" : "%s"`(it.key, it.value))
+		.map!(it => format!"\t\t\"%s\" : \"%s\""(it.key, it.value))
 		.joiner(",\n")
 		.copy(ltw);
 	formattedWrite(ltw, "\n\t}");
-	if(!dpf.pathToGit.empty) {
-		formattedWrite(ltw, `,\n\t"gitPath" : "%s"`, dpf.pathToGit);
-	}
 	formattedWrite(ltw, "\n}");
+}
+
+DubProxyFile getCodeDlangOrgCopy() {
+	return parseCodeDlangOrgData(getCodeDlangOrgData());
+}
+
+string getCodeDlangOrgData() @trusted {
+	import std.exception : assumeUnique;
+	import std.net.curl;
+	import std.zlib;
+
+	auto data = get("https://code.dlang.org/api/packages/dump");
+
+	auto uc = new UnCompress();
+
+	const(void[]) un = uc.uncompress(data);
+	return assumeUnique(cast(const(char)[])un);
+}
+
+DubProxyFile parseCodeDlangOrgData(string data) {
+	string fixUpKind(string kind) {
+		switch(kind) {
+			case "github": return "github.com";
+			case "bitbucket": return "bitbucket.org";
+			case "gitlab": return "gitlab.com";
+			default:
+				assert(false, kind);
+		}
+	}
+
+	JSONValue parsed = parseJSON(data);
+	DubProxyFile ret;
+
+	enforce(parsed.type == JSONType.array,
+			"Downloaded code.dlang.org dump was not an array");
+
+	foreach(it; parsed.arrayNoRef()) {
+		enforce(it.type == JSONType.object,
+				format!"Expected object got '%s' from '%s'"(it.type,
+					it.toPrettyString()));
+		auto name = "name" in it;
+		enforce(name && name.type == JSONType.string,
+				format!"no name found in '%s'"(it.toPrettyString()));
+		string nameStr = name.str;
+		//write(nameStr, " : ");
+		auto repo = "repository" in it;
+		if(repo && repo.type == JSONType.object) {
+			auto kind = "kind" in (*repo);
+			auto owner = "owner" in (*repo);
+			auto project = "project" in (*repo);
+
+			enforce(kind && kind.type == JSONType.string,
+					format!"kind was null in '%s'" (repo.toPrettyString()));
+			enforce(owner && owner.type == JSONType.string,
+					format!"owner was null in '%s'" (repo.toPrettyString()));
+			enforce(project && project.type == JSONType.string,
+					format!"project was null in '%s'" (repo.toPrettyString()));
+
+			string url = format!"https://%s/%s/%s.git"(fixUpKind(kind.str),
+					owner.str, project.str);
+			//writeln(url);
+			ret.insertPath(nameStr, url);
+		}
+	}
+
+	return ret;
 }
