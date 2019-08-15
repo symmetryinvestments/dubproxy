@@ -1,8 +1,10 @@
+import std.array : empty;
 import std.stdio;
-
 import std.getopt;
 
 import dubproxy;
+import dubproxy.git;
+
 import opts = options;
 
 int main(string[] args) {
@@ -77,10 +79,45 @@ int main(string[] args) {
 	DubProxyFile dpf = fromFile(opts.options.proxyFile);
 	foreach(it; opts.options.packages) {
 		const GetSplit s = splitGet(it);
-		writeln(it);
+		const gitDestDir = getPackage(dpf, s.pkg);
+		TagReturn[] allTags = getTags(gitDestDir, TagKind.all,
+				opts.options.libOptions);
+		foreach(tag; allTags) {
+			const ver = tag.getVersion();
+			if(s.ver.empty || s.ver == ver) {
+				createWorkingTree(gitDestDir, tag, s.pkg,
+						opts.options.packageFolder, opts.options.libOptions);
+			}
+		}
 	}
 
 	return 0;
+}
+
+string getPackage(ref const(DubProxyFile) dpf, string pkg) {
+	import std.path : buildPath;
+
+	if(!dpf.pkgExists(pkg)) {
+		writefln!"No package '%s' exists in DubProxyFile '%s'"(pkg,
+				opts.options.proxyFile);
+	}
+
+	const string pkgPath = dpf.getPath(pkg);
+	const PathKind pk = getPathKind(pkgPath);
+	const gitDestDir = buildPath(opts.options.gitFolder, pkg);
+	final switch(pk) {
+		case PathKind.remoteGit:
+			cloneBare(pkgPath, LocalGit.no, gitDestDir,
+					opts.options.libOptions);
+			break;
+		case PathKind.localGit:
+			cloneBare(pkgPath, LocalGit.yes, gitDestDir,
+					opts.options.libOptions);
+			break;
+		case PathKind.folder:
+			assert(false, "TODO");
+	}
+	return gitDestDir;
 }
 
 struct GetSplit {

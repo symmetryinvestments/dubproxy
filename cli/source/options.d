@@ -9,7 +9,8 @@ struct DubProxyCliOptions {
 	string mirrorFilename = "code.json";
 	string[] packages;
 	string proxyFile = "dubproxy.json";
-	string packageFolder;
+	string packageFolder = "~/.dub/packages/";
+	string gitFolder = "~/.dub/DubProxyGits/";
 
 	bool dummyDubProxy;
 	string dummyDubProxyPath = ".";

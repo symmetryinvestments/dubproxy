@@ -26,8 +26,9 @@ struct TagReturn {
 
 		enforce(!this.tag.empty, "Can not compute version of empty tag");
 		const idx = this.tag.lastIndexOf('/');
-		enforce(idx != -1, format!(
-			"Can not find a '/' to split out the version in '%s'")(this.tag));
+		if(idx == -1) {
+			return this.tag;
+		}
 		return this.tag[idx + 1 .. $];
 	}
 }
@@ -161,18 +162,18 @@ void insertVersionIntoDubFile(string packageDir, string ver,
 	const sdlE = exists(sdl);
 	const cVer = ver.startsWith("v") ? ver[1 .. $] : ver;
 	if(jsE) {
-		inserVersionIntoDubJsonFile(js, cVer);
+		insertVersionIntoDubJsonFile(js, cVer);
 	} else if(sdlE) {
-		inserVersionIntoDubSDLFile(sdl, cVer, options);
+		insertVersionIntoDubSDLFile(sdl, cVer, options);
 	} else if(pkgE) {
-		inserVersionIntoDubJsonFile(pkg, cVer);
+		insertVersionIntoDubJsonFile(pkg, cVer);
 	} else {
 		enforce(false, format!"could not find a dub.{json,sdl} file in '%s'"
 				(packageDir));
 	}
 }
 
-void inserVersionIntoDubJsonFile(string fileName, string ver) {
+void insertVersionIntoDubJsonFile(string fileName, string ver) {
 	import std.json : JSONValue, parseJSON;
 	JSONValue j = parseJSON(readText(fileName));
 	j["version"] = ver;
@@ -182,7 +183,7 @@ void inserVersionIntoDubJsonFile(string fileName, string ver) {
 	f.writeln();
 }
 
-void inserVersionIntoDubSDLFile(string fileName, string ver,
+void insertVersionIntoDubSDLFile(string fileName, string ver,
 		ref const(DubProxyOptions) options)
 {
 	import std.path : dirName;
@@ -200,7 +201,7 @@ void inserVersionIntoDubSDLFile(string fileName, string ver,
 			~ "dub.json with cmd '%s'")(rslt.status, rslt.output, toExe));
 
 	const jsFn = pth ~ "/dub.json";
-	inserVersionIntoDubJsonFile(jsFn, ver);
+	insertVersionIntoDubJsonFile(jsFn, ver);
 }
 
 enum PathKind {
