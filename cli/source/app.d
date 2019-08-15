@@ -76,8 +76,28 @@ int main(string[] args) {
 
 	DubProxyFile dpf = fromFile(opts.options.proxyFile);
 	foreach(it; opts.options.packages) {
+		const GetSplit s = splitGet(it);
 		writeln(it);
 	}
 
 	return 0;
+}
+
+struct GetSplit {
+	string pkg;
+	string ver;
+}
+
+GetSplit splitGet(string str) {
+	import std.string : indexOf;
+
+	GetSplit ret;
+	const colon = str.indexOf(':');
+	if(colon == -1) {
+		ret.pkg = str;
+	} else {
+		ret.pkg = str[0 .. colon];
+		ret.ver = str[colon + 1 .. $];
+	}
+	return ret;
 }

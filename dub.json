@@ -3,6 +3,10 @@
 		"Robert burner Schadek"
 	],
 	"copyright": "Copyright © 2019, Symmetry Investments",
+	"type": "library",
+	"dependencies": {
+		"urld": "~>2.1.1"
+	},
 	"description": "A proxy for dub to allow local dependency resolution",
 	"license": "LGPL3",
 	"name": "dubproxy"

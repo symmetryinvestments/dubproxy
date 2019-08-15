@@ -4,7 +4,8 @@ import std.array : empty;
 import std.algorithm.iteration : filter, splitter;
 import std.algorithm.searching : startsWith;
 import std.exception : enforce;
-import std.file : exists, mkdirRecurse, rmdirRecurse, getcwd, chdir, readText;
+import std.file : exists, isDir, mkdirRecurse, rmdirRecurse, getcwd, chdir,
+	   readText;
 import std.path : absolutePath;
 import std.stdio : File;
 import std.format : format;
@@ -200,4 +201,26 @@ void inserVersionIntoDubSDLFile(string fileName, string ver,
 
 	const jsFn = pth ~ "/dub.json";
 	inserVersionIntoDubJsonFile(jsFn, ver);
+}
+
+enum PathKind {
+	remoteGit,
+	localGit,
+	folder
+}
+
+PathKind getPathKind(string path) {
+	import url;
+	if(exists(path) && isDir(path) && exists(path ~ "/.git")) {
+		return PathKind.localGit;
+	} else if(exists(path) && isDir(path) && !exists(path ~ "/.git")) {
+		return PathKind.folder;
+	}
+
+	URL u;
+	if(tryParseURL(path, u)) {
+		return PathKind.remoteGit;
+	}
+
+	throw new Exception(format!"Couldn't determine PathKind for '%s'"(path));
 }
