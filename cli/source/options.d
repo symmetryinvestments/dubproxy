@@ -20,6 +20,8 @@ struct DubProxyCliOptions {
 
 	string showTagsPath;
 	TagKind tagKind = TagKind.all;
+
+	bool cloneAll;
 }
 
 private DubProxyCliOptions __options;

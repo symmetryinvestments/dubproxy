@@ -69,7 +69,11 @@ int main(string[] args) {
 
 		"k|tagsKind",
 		"Limit tags to a specific kind of tags",
-		&opts.writeAbleOptions().tagKind
+		&opts.writeAbleOptions().tagKind,
+
+		"a|cloneAll",
+		"Clone or fetch all files in the provided \"i|input\" file",
+		&opts.writeAbleOptions().cloneAll
 		);
 
 	if(helpInformation.helpWanted) {
@@ -109,9 +113,27 @@ int main(string[] args) {
 		}
 
 		foreach(it; tags) {
-			writefln("%50s %s", it.tag, it.hash);
+			writefln("%s %s", it.hash, it.tag);
 		}
 		return 0;
+	}
+
+	if(opts.options.cloneAll) {
+		bool worked = true;
+		DubProxyFile dpf = fromFile(opts.options.proxyFile);
+		const len = dpf.packages.length;
+		size_t i = 1;
+		foreach(key, value; dpf.packages) {
+			writefln!"Getting git for '%s' %d of %d"(key, i, len);
+			try {
+				getPackage(dpf, key);
+			} catch(Exception e) {
+				worked = false;
+				writefln!"Update to get '%s' with msg '%s'"(key, e.toString());
+			}
+			++i;
+		}
+		return worked == true;
 	}
 
 	if(!opts.options.packages.empty) {
