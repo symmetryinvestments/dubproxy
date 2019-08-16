@@ -9,16 +9,16 @@
 	},
 	"configurations": [
 		{
-			"name": "dubproxy",
-			"targetType": "library",
-			"sourcePaths": ["source/"],
-			"importPaths": ["source/"]
-		},
-		{
 			"name": "cli",
 			"targetType": "executable",
 			"sourcePaths": ["source/", "clisource/"],
 			"importPaths": ["source/", "clisource/"]
+		},
+		{
+			"name": "dubproxy",
+			"targetType": "library",
+			"sourcePaths": ["source/"],
+			"importPaths": ["source/"]
 		}
 	],
 	"description": "A proxy for dub to allow local dependency resolution",
