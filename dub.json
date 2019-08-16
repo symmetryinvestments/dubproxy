@@ -7,6 +7,20 @@
 	"dependencies": {
 		"urld": "~>2.1.1"
 	},
+	"configurations": [
+		{
+			"name": "dubproxy",
+			"targetType": "library",
+			"sourcePaths": ["source/"],
+			"importPaths": ["source/"]
+		},
+		{
+			"name": "cli",
+			"targetType": "executable",
+			"sourcePaths": ["source/", "clisource/"],
+			"importPaths": ["source/", "clisource/"]
+		}
+	],
 	"description": "A proxy for dub to allow local dependency resolution",
 	"license": "LGPL3",
 	"name": "dubproxy"
