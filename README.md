@@ -1,7 +1,7 @@
 # dubproxy
 
-dubproxy is a library and cli to allow to use private dub packages and mirror
-code.dlang.org.
+dubproxy is a library and cli to allow use of private dub packages and mirror
+code.dlang.org, without a private registry.
 It is a standalone library/cli and is completely transparent for dub.
 
 ## private libraries
