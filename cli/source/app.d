@@ -68,7 +68,7 @@ int main(string[] args) {
 			}
 			++i;
 		}
-		return worked == true;
+		return worked ? 0 : 1;
 	}
 
 	if(!opts.options.packages.empty) {
