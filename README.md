@@ -51,6 +51,7 @@ By default dubproxy will try to place the git in system default dub directory.
 5. get a package and place the git a user specified directory
 ```sh
 $ dubproxy -i codeldangorg.json -g xlsxreader -f GitCloneFolder
+$ dubproxy -i codeldangorg.json -g xlsxreader:v0.6.1 -f GitCloneFolder
 ```
 
 6. place the dub package in a user specified directory
