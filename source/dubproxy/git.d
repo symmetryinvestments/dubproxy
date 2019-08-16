@@ -165,17 +165,14 @@ void cloneBare(string path, const LocalGit lg, string destDir,
 	const string absDestDir = absolutePath(expandTilde(destDir));
 	const bool e = exists(absDestDir);
 
-	import std.stdio;
 	if(e && options.ovrGF == OverrideGitFolder.yes) {
-		writeln(__LINE__, " ", absDestDir);
 		() @trusted { rmdirRecurse(absDestDir); }();
 		clone();
 	} else if(!e) {
-		writeln(__LINE__, " ", absDestDir);
 		clone();
 	} else {
 		auto oldCwd = getcwd();
-		chdir(destDir);
+		chdir(absDestDir);
 		scope(exit) {
 			chdir(oldCwd);
 		}
@@ -194,8 +191,8 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 {
 	const ver = tag.getVersion();
 	const verTag = ver.startsWith("v") ? ver[1 .. $] : ver;
-	const absGitPath = absolutePath(clonedGitPath);
-	const absDestDir = absolutePath(destDir);
+	const absGitPath = absolutePath(expandTilde(clonedGitPath));
+	const absDestDir = absolutePath(expandTilde(destDir));
 	const rsltPath = format!"%s/%s-%s/%s"(absDestDir, packageName, verTag,
 			packageName);
 
@@ -254,6 +251,7 @@ void insertVersionIntoDubFile(string packageDir, string ver,
 
 void insertVersionIntoDubJsonFile(string fileName, string ver) {
 	import std.json : JSONValue, parseJSON;
+	fileName = absolutePath(expandTilde(fileName));
 	JSONValue j = parseJSON(readText(fileName));
 	j["version"] = ver;
 
@@ -266,7 +264,7 @@ void insertVersionIntoDubSDLFile(string fileName, string ver,
 		ref const(DubProxyOptions) options)
 {
 	import std.path : dirName;
-	const pth = dirName(fileName);
+	const pth = dirName(absolutePath(expandTilde(fileName)));
 	const string cwd = getcwd();
 	scope(exit) {
 		chdir(cwd);
