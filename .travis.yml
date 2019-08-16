@@ -1,0 +1,12 @@
+language: d
+sudo: false
+
+d:
+  - dmd
+  - ldc
+
+script:
+  - dub test --compiler=${DC}
+
+notifications:
+  email: false
