@@ -10,4 +10,5 @@ struct DubProxyOptions {
 	OverrideWorkTreeFolder ovrWTF;
 	string pathToGit = "git";
 	string pathToDub = "dub";
+	bool noUserInteraction;
 }

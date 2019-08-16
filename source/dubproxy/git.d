@@ -6,7 +6,7 @@ import std.algorithm.searching : startsWith;
 import std.exception : enforce;
 import std.file : exists, isDir, mkdirRecurse, rmdirRecurse, getcwd, chdir,
 	   readText;
-import std.path : absolutePath;
+import std.path : absolutePath, expandTilde;
 import std.stdio : File;
 import std.format : format;
 import std.process : executeShell;
@@ -76,9 +76,12 @@ string getTagDataLocal(const string path, const(TagKind) tk,
 	}
 
 	const toExe = tk == TagKind.tags
-		? format!`%s ls-remote --tags --sort="-version:refname" .`(
+		? format!`%s%s ls-remote --tags --sort="-version:refname" .`(
+				options.noUserInteraction ? "GIT_TERMINAL_PROMPT=0 " : "",
 				options.pathToGit)
-		: format!`%s ls-remote .`(options.pathToGit);
+		: format!`%s%s ls-remote .`(
+				options.noUserInteraction ? "GIT_TERMINAL_PROMPT=0 " : "",
+				options.pathToGit);
 
 	auto rslt = executeShell(toExe);
 	enforce(rslt.status == 0, format!
@@ -98,10 +101,13 @@ string getTagDataRemote(string path, const(TagKind) tk,
 		ref const(DubProxyOptions) options)
 {
 	const toExe = tk == TagKind.tags
-		? format!`%s ls-remote --tags --sort="-version:refname" %s`(
+		? format!`%s%s ls-remote --tags --sort="-version:refname" %s`(
+				options.noUserInteraction ? "GIT_TERMINAL_PROMPT=0 " : "",
 				options.pathToGit, path
 			)
-		: format!`%s ls-remote %s`(options.pathToGit, path);
+		: format!`%s%s ls-remote %s`(
+				options.noUserInteraction ? "GIT_TERMINAL_PROMPT=0 " : "",
+				options.pathToGit, path);
 
 	auto rslt = executeShell(toExe);
 	enforce(rslt.status == 0, format!
@@ -146,7 +152,9 @@ void cloneBare(string path, const LocalGit lg, string destDir,
 		ref const(DubProxyOptions) options)
 {
 	void clone() {
-		const toExe = format!`%s clone --bare%s %s %s`(options.pathToGit,
+		const toExe = format!`%s%s clone --bare%s %s %s`(
+				options.noUserInteraction ? "GIT_TERMINAL_PROMPT=0 " : "",
+				options.pathToGit,
 				lg == LocalGit.yes ? " -l" : "", path, destDir);
 		auto rslt = executeShell(toExe);
 		enforce(rslt.status == 0, format!
@@ -154,12 +162,16 @@ void cloneBare(string path, const LocalGit lg, string destDir,
 				toExe, rslt.status, rslt.output));
 	}
 
-	const bool e = exists(destDir);
+	const string absDestDir = absolutePath(expandTilde(destDir));
+	const bool e = exists(absDestDir);
 
+	import std.stdio;
 	if(e && options.ovrGF == OverrideGitFolder.yes) {
-		() @trusted { rmdirRecurse(destDir); }();
+		writeln(__LINE__, " ", absDestDir);
+		() @trusted { rmdirRecurse(absDestDir); }();
 		clone();
 	} else if(!e) {
+		writeln(__LINE__, " ", absDestDir);
 		clone();
 	} else {
 		auto oldCwd = getcwd();
@@ -167,7 +179,9 @@ void cloneBare(string path, const LocalGit lg, string destDir,
 		scope(exit) {
 			chdir(oldCwd);
 		}
-		const toExe = format!`%s fetch --all`(options.pathToGit);
+		const toExe = format!`%s%s fetch --all`(
+				options.noUserInteraction ? "GIT_TERMINAL_PROMPT=0 " : "",
+				options.pathToGit);
 		auto rslt = executeShell(toExe);
 		enforce(rslt.status == 0, format!
 				"'%s' returned with '%d' 0 was expected output '%s'"(

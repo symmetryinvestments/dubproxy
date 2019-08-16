@@ -7,22 +7,24 @@ It is a standalone library/cli and is completely transparent for dub.
 ## private libraries
 
 Sometimes a dub project needs access to private library.
-Getting dub to correctly work with subpackages is not always easy.
-It is sometimes therefore desirable to complete split out subpackages into there
+Subpackages are one solution, but getting dub to correctly work with subpackages
+is not always easy.
+Therefor, it is sometimes desirable to complete split out subpackages into there
 own dub project.
-dubproxy allows to do that.
+Dubproxy allows to do that.
 One of dubproxy's features is to take local/remote dub projects, located in a
-git, and insert it into ~/.dub/packages such that dub thinks its just another
+git, and insert them into ~/.dub/packages such that dub thinks its just another
 package from code.dlang.org.
 
 ## code.dlang.org mirroring
 
-Code.dlang.org is not always accessible, but a particular package.
+Code.dlang.org is not always accessible, but a still might be required right
+now.
 Maybe you are on a flight to dconf or code.dlang.org is down.
-dubproxy allows you to get a storable list of all packages and upstream urls.
+Dubproxy allows you to get a storable list of all packages and upstream urls.
 This list can then be used by dubproxy to get a particular package or
 package-version.
-You need internet access or course.
+You need internet access of course.
 As time of writing this Aug. 2019 all gits of all package of code.dlang.org
 require about 6.5 GB of space.
 
@@ -63,8 +65,12 @@ $ dubproxy -i codeldangorg.json -g graphqld -g inifiled
 
 8. get all packages in a file (run before long flight)
 ```sh
-$ dubproxy -i codeldangorg.json -a
+$ dubproxy -i codeldangorg.json -a -u
 ```
+
+The `-u` is necessary to disable user interaction, because some listed packages
+on code.dlang.org do not exist anymore and github.com therefore askeds for a
+username password combination.
 
 9. dub is not in your path
 ```sh
@@ -79,6 +85,11 @@ $ dubproxy -p path_to_git
 11. generate a dummy dubproxy.json file with filename myPrivateProjects.json
 ```sh
 $ dubproxy --dummy --dummyPath myPrivateProjects.json
+```
+
+12. get help
+```sh
+$ dubproxy -h
 ```
 
 About Kaleidic Associates

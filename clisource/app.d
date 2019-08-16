@@ -54,7 +54,7 @@ int main(string[] args) {
 		return 0;
 	}
 
-	if(opts.options.cloneAll) {
+	if(opts.options.cloneAll || opts.options.cloneAllNoTerminal) {
 		bool worked = true;
 		DubProxyFile dpf = fromFile(opts.options.proxyFile);
 		const len = dpf.packages.length;

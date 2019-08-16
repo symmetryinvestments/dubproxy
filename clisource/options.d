@@ -23,6 +23,7 @@ struct DubProxyCliOptions {
 	TagKind tagKind = TagKind.all;
 
 	bool cloneAll;
+	bool cloneAllNoTerminal;
 }
 
 private DubProxyCliOptions __options;
@@ -120,8 +121,12 @@ GetoptResult parseOptions(ref string[] args) {
 		&writeAbleOptions().tagKind,
 
 		"a|cloneAll",
-		"Clone or fetch all files in the provided \"i|input\" file",
-		&writeAbleOptions().cloneAll
+		"Clone or fetch all packages provided in \"i|input\"",
+		&writeAbleOptions().cloneAll,
+
+		"u|noUserInteraction",
+		"Run git without user interaction",
+		&writeAbleOptions().libOptions.noUserInteraction
 		);
 
 	return helpInformation;
