@@ -9,72 +9,7 @@ import dubproxy.git;
 import opts = options;
 
 int main(string[] args) {
-	auto helpInformation = getopt(args,
-		"m|mirror",
-		"Get a list of packages currently available on code.dlang.org"
-		~ "\n\t\t\tand store a file specified in \"n|mirrorFileName\"",
-		&opts.writeAbleOptions().mirrorCodeDlang,
-
-		"n|mirrorFileName",
-		"The filename where to store the packages available on code.dlang.org",
-		&opts.writeAbleOptions().mirrorFilename,
-
-		"d|dubPath",
-		"The path to the dub executable",
-		&opts.writeAbleOptions().libOptions.pathToDub,
-
-		"p|gitPath",
-		"The path to the git executable",
-		&opts.writeAbleOptions().libOptions.pathToGit,
-
-		"f|gitFolder",
-		"The path where the gits get cloned to",
-		&opts.writeAbleOptions().gitFolder,
-
-		"overrideGit",
-		"Allow to override the git folder of cloned packages",
-		&opts.writeAbleOptions().libOptions.ovrGF,
-
-		"overrideTree",
-		"Allow to override the git worktree folder of cloned package version",
-		&opts.writeAbleOptions().libOptions.ovrWTF,
-
-		"g|get",
-		"Get a precific package. \"-g dub\" will fetch dub and create"
-		~ "\n\t\t\tfolders for all version tags for dub. \"-g dub:1.1.0\" will "
-		~ "\n\t\t\ttry to get dub and create a package for v1.1.0. "
-		~ "\n\t\t\t\"g dub:~master\" will try get dub and create a package for "
-		~ "\n\t\t\t~master",
-		&opts.writeAbleOptions().packages,
-
-		"i|proxyFile",
-		"The filename of the dubproxy file to search packages in",
-		&opts.writeAbleOptions().proxyFile,
-
-		"o|packagesFolder",
-		"The path where packages should be stored",
-		&opts.writeAbleOptions().packageFolder,
-
-		"dummy",
-		"Generate a empty dubproxy.json file",
-		&opts.writeAbleOptions().dummyDubProxy,
-
-		"dummyPath",
-		"Path to the folder where to create the dummy dubproxy.json file",
-		&opts.writeAbleOptions().dummyDubProxyPath,
-
-		"t|tags",
-		"Show tags for passed dirpath or url",
-		&opts.writeAbleOptions().showTagsPath,
-
-		"k|tagsKind",
-		"Limit tags to a specific kind of tags",
-		&opts.writeAbleOptions().tagKind,
-
-		"a|cloneAll",
-		"Clone or fetch all files in the provided \"i|input\" file",
-		&opts.writeAbleOptions().cloneAll
-		);
+	auto helpInformation = opts.parseOptions(args);
 
 	if(helpInformation.helpWanted) {
 		defaultGetoptPrinter("Dubproxy is a tool to make dub work with "
