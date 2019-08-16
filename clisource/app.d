@@ -20,6 +20,7 @@ int main(string[] args) {
 
 	if(opts.options.dummyDubProxy) {
 		DubProxyFile dpf;
+		dpf.insertPath("dummy", "https://does_not_exist.git");
 		toFile(dpf, opts.options.dummyDubProxyPath ~ "/dubproxy.json");
 	}
 
