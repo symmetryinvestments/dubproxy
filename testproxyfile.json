@@ -1,7 +1,0 @@
-{
-	"packages" : {
-		"xlsxd" : "https://github.com/symmetryinvestments/xlsxd.git",
-		"udt_d" : "https://github.com/symmetryinvestments/udt_d",
-		"dubproxy" : "."
-	}
-}
