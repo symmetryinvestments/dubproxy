@@ -13,6 +13,8 @@ import std.process : executeShell;
 import std.typecons : Flag;
 import std.string : split, strip;
 
+import url;
+
 import dubproxy.options;
 
 @safe:
@@ -50,31 +52,80 @@ enum TagKind {
 	all
 }
 
-TagReturn[] getTags(string path, ref const(DubProxyOptions) options) {
-	return getTags(path, TagKind.tags, options);
+TagReturn[] getTags(string path, const(TagKind) tk,
+		ref const(DubProxyOptions) options)
+{
+	URL u;
+	if(exists(path) && isDir(path)) {
+		return getTagsLocal(path, tk, options);
+	} else if(tryParseURL(path, u)) {
+		return getTagsRemote(path, tk, options);
+	} else {
+		assert(false, format!"Path '%s' could be resolved to get git tags"
+				(path));
+	}
 }
 
-TagReturn[] getTags(string path, TagKind tk, ref const(DubProxyOptions) options)
+string getTagDataLocal(const string path, const(TagKind) tk,
+		ref const(DubProxyOptions) options)
 {
-	import std.algorithm.searching : canFind;
+	auto oldCwd = getcwd();
+	chdir(path);
+	scope(exit) {
+		chdir(oldCwd);
+	}
 
+	const toExe = tk == TagKind.tags
+		? format!`%s ls-remote --tags --sort="-version:refname" .`(
+				options.pathToGit)
+		: format!`%s ls-remote .`(options.pathToGit);
+
+	auto rslt = executeShell(toExe);
+	enforce(rslt.status == 0, format!
+			"'%s' returned with '%d' 0 was expected output '%s'"(
+			toExe, rslt.status, rslt.output));
+	return rslt.output;
+}
+
+TagReturn[] getTagsLocal(string path, const(TagKind) tk,
+		ref const(DubProxyOptions) options)
+{
+	string data = getTagDataLocal(path, tk, options);
+	return processTagData(data, tk);
+}
+
+string getTagDataRemote(string path, const(TagKind) tk,
+		ref const(DubProxyOptions) options)
+{
 	const toExe = tk == TagKind.tags
 		? format!`%s ls-remote --tags --sort="-version:refname" %s`(
 				options.pathToGit, path
 			)
 		: format!`%s ls-remote %s`(options.pathToGit, path);
 
+	auto rslt = executeShell(toExe);
+	enforce(rslt.status == 0, format!
+			"'%s' returned with '%d' 0 was expected output '%s' cwd '%s'"(
+			toExe, rslt.status, rslt.output, getcwd()));
+	return rslt.output;
+}
+
+TagReturn[] getTagsRemote(string path, const(TagKind) tk,
+		ref const(DubProxyOptions) options)
+{
+	string data = getTagDataRemote(path, tk, options);
+	return processTagData(data, tk);
+}
+
+private TagReturn[] processTagData(string data, const(TagKind) tk) {
+	import std.algorithm.searching : canFind;
+
 	const kindFilter = tk == TagKind.branch ? "heads"
 		: tk == TagKind.pull ? "pull"
 		: tk == TagKind.tags ? "tags" : "";
 
-	auto rslt = executeShell(toExe);
-	enforce(rslt.status == 0, format!
-			"'%s' returned with '%d' 0 was expected output '%s'"(
-			toExe, rslt.status, rslt.output));
-
 	TagReturn[] ret;
-	foreach(line; rslt.output.splitter("\n")
+	foreach(line; data.splitter("\n")
 			.filter!(line => !line.empty)
 			.filter!(line => !canFind(line, "^{}"))
 			.filter!(line => kindFilter.empty || line.canFind(kindFilter)))
@@ -94,20 +145,34 @@ alias LocalGit = Flag!"LocalGit";
 void cloneBare(string path, const LocalGit lg, string destDir,
 		ref const(DubProxyOptions) options)
 {
-	const bool e = exists(destDir);
-	enforce(!e || options.ovrGF == OverrideGitFolder.yes, format!(
-			"Path '%s' exist and override flag was not passed")(destDir));
-
-	if(e) {
-		() @trusted { rmdirRecurse(destDir); }();
+	void clone() {
+		const toExe = format!`%s clone --bare%s %s %s`(options.pathToGit,
+				lg == LocalGit.yes ? " -l" : "", path, destDir);
+		auto rslt = executeShell(toExe);
+		enforce(rslt.status == 0, format!
+				"'%s' returned with '%d' 0 was expected output '%s'"(
+				toExe, rslt.status, rslt.output));
 	}
 
-	const toExe = format!`%s clone --bare%s %s %s`(options.pathToGit,
-			lg == LocalGit.yes ? " -l" : "", path, destDir);
-	auto rslt = executeShell(toExe);
-	enforce(rslt.status == 0, format!
-			"'%s' returned with '%d' 0 was expected output '%s'"(
-			toExe, rslt.status, rslt.output));
+	const bool e = exists(destDir);
+
+	if(e && options.ovrGF == OverrideGitFolder.yes) {
+		() @trusted { rmdirRecurse(destDir); }();
+		clone();
+	} else if(!e) {
+		clone();
+	} else {
+		auto oldCwd = getcwd();
+		chdir(destDir);
+		scope(exit) {
+			chdir(oldCwd);
+		}
+		const toExe = format!`%s fetch --all`(options.pathToGit);
+		auto rslt = executeShell(toExe);
+		enforce(rslt.status == 0, format!
+				"'%s' returned with '%d' 0 was expected output '%s'"(
+				toExe, rslt.status, rslt.output));
+	}
 }
 
 void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
@@ -211,7 +276,6 @@ enum PathKind {
 }
 
 PathKind getPathKind(string path) {
-	import url;
 	if(exists(path) && isDir(path) && exists(path ~ "/.git")) {
 		return PathKind.localGit;
 	} else if(exists(path) && isDir(path) && !exists(path ~ "/.git")) {

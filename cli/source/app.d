@@ -1,6 +1,7 @@
 import std.array : empty;
 import std.stdio;
 import std.getopt;
+import std.file : exists;
 
 import dubproxy;
 import dubproxy.git;
@@ -25,6 +26,10 @@ int main(string[] args) {
 		"p|gitPath",
 		"The path to the git executable",
 		&opts.writeAbleOptions().libOptions.pathToGit,
+
+		"f|gitFolder",
+		"The path where the gits get cloned to",
+		&opts.writeAbleOptions().gitFolder,
 
 		"overrideGit",
 		"Allow to override the git folder of cloned packages",
@@ -57,6 +62,14 @@ int main(string[] args) {
 		"dummyPath",
 		"Path to the folder where to create the dummy dubproxy.json file",
 		&opts.writeAbleOptions().dummyDubProxyPath,
+
+		"t|tags",
+		"Show tags for passed dirpath or url",
+		&opts.writeAbleOptions().showTagsPath,
+
+		"k|tagsKind",
+		"Limit tags to a specific kind of tags",
+		&opts.writeAbleOptions().tagKind
 		);
 
 	if(helpInformation.helpWanted) {
@@ -76,17 +89,45 @@ int main(string[] args) {
 		toFile(dpf, opts.options.mirrorFilename);
 	}
 
-	DubProxyFile dpf = fromFile(opts.options.proxyFile);
-	foreach(it; opts.options.packages) {
-		const GetSplit s = splitGet(it);
-		const gitDestDir = getPackage(dpf, s.pkg);
-		TagReturn[] allTags = getTags(gitDestDir, TagKind.all,
-				opts.options.libOptions);
-		foreach(tag; allTags) {
-			const ver = tag.getVersion();
-			if(s.ver.empty || s.ver == ver) {
-				createWorkingTree(gitDestDir, tag, s.pkg,
-						opts.options.packageFolder, opts.options.libOptions);
+	if(!opts.options.showTagsPath.empty) {
+		TagReturn[] tags;
+		if(exists(opts.options.proxyFile)) {
+			DubProxyFile dpf = fromFile(opts.options.proxyFile);
+			if(dpf.pkgExists(opts.options.showTagsPath)) {
+				tags = getTags(dpf.getPath(opts.options.showTagsPath),
+						opts.options.tagKind, opts.options.libOptions);
+			}
+		} else if(exists(opts.options.showTagsPath)) {
+			tags = getTags(opts.options.showTagsPath, opts.options.tagKind,
+					opts.options.libOptions);
+		}
+
+		if(tags.empty) {
+			writefln!"Could not find and tags for path '%s'"
+				(opts.options.showTagsPath);
+			return 1;
+		}
+
+		foreach(it; tags) {
+			writefln("%50s %s", it.tag, it.hash);
+		}
+		return 0;
+	}
+
+	if(!opts.options.packages.empty) {
+		DubProxyFile dpf = fromFile(opts.options.proxyFile);
+		foreach(it; opts.options.packages) {
+			const GetSplit s = splitGet(it);
+			const gitDestDir = getPackage(dpf, s.pkg);
+			TagReturn[] allTags = getTags(gitDestDir, TagKind.all,
+					opts.options.libOptions);
+			foreach(tag; allTags) {
+				const ver = tag.getVersion();
+				if(s.ver.empty || s.ver == ver) {
+					createWorkingTree(gitDestDir, tag, s.pkg,
+							opts.options.packageFolder,
+							opts.options.libOptions);
+				}
 			}
 		}
 	}
