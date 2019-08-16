@@ -1,7 +1,6 @@
 # dubproxy
 
-![alt text](https://travis-ci.org/symmetryinvestments/dubproxy.svg)
-
+[![Build Status](https://travis-ci.org/symmetryinvestments/dubproxy.svg?branch=master)](https://travis-ci.org/symmetryinvestments/dubproxy)
 dubproxy is a library and cli to allow use of private dub packages and mirror
 code.dlang.org, without a private registry.
 It is a standalone library/cli and is completely transparent for dub.
