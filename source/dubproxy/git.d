@@ -224,7 +224,7 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 			"'%s' returned with '%d' 0 was expected output '%s'"(
 			toExe, rslt.status, rslt.output));
 
-	insertVersionIntoDubFile(rsltPath, verTag, options);
+	insertVersionIntoDubFile(rsltPath, ver, options);
 }
 
 void insertVersionIntoDubFile(string packageDir, string ver,
@@ -236,7 +236,10 @@ void insertVersionIntoDubFile(string packageDir, string ver,
 	const pkgE = exists(pkg);
 	const sdl = format!"%s/dub.sdl"(packageDir);
 	const sdlE = exists(sdl);
-	const cVer = ver.startsWith("v") ? ver[1 .. $] : ver;
+	const cVer = ver.startsWith("v")
+		? ver[1 .. $]
+		: ver.startsWith("~") ? ver : "~" ~ ver;
+
 	if(jsE) {
 		insertVersionIntoDubJsonFile(js, cVer);
 	} else if(sdlE) {
