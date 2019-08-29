@@ -7,7 +7,7 @@ It is a standalone library/cli and is completely transparent for dub.
 
 ## private libraries
 
-Sometimes a dub project needs access to private library.
+Sometimes a dub project needs access to a private library.
 Subpackages are one solution, but getting dub to correctly work with subpackages
 is not always easy.
 Therefor, it is sometimes desirable to complete split out subpackages into there
