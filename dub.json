@@ -5,8 +5,7 @@
 	"copyright": "Copyright © 2019, Symmetry Investments",
 	"type": "library",
 	"dependencies": {
-		"urld": "~>2.1.1",
-		"graphqld": "~master"
+		"urld": "~>2.1.1"
 	},
 	"configurations": [
 		{
