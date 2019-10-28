@@ -3,6 +3,8 @@ import std.stdio;
 import std.getopt;
 import std.experimental.logger;
 import std.file : exists;
+import std.path : buildPath;
+
 
 import dubproxy;
 import dubproxy.git;
@@ -19,8 +21,10 @@ int main(string[] args) {
 		return 0;
 	}
 
-	if(options().verbose) {
+	if(opts.options().verbose) {
 		globalLogLevel(LogLevel.trace);
+	} else {
+		globalLogLevel(LogLevel.error);
 	}
 
 	if(opts.options.dummyDubProxy) {
@@ -78,25 +82,36 @@ int main(string[] args) {
 			}
 			++i;
 		}
-		return worked ? 0 : 1;
 	}
 
-	if(!opts.options.packages.empty) {
+	if(!opts.options.packages.empty || opts.options.genAllTags) {
+		tracef("genTags %s", opts.options.proxyFile);
 		DubProxyFile dpf = fromFile(opts.options.proxyFile);
-		foreach(it; opts.options.packages) {
-			tracef("build tag it %s", it);
-			const GetSplit s = splitGet(it);
-			const gitDestDir = getPackage(dpf, s.pkg);
+		tracef("_\tpackages %s", dpf.packages);
+		foreach(key, value; dpf.packages) {
+			tracef("_\t_\tbuild tag it %s", key);
+			const gitDestDir = buildPath(opts.options.gitFolder, key);
+			tracef("_\t_\tgitDestDir %s", gitDestDir);
+			const GetSplit s = splitLocal(gitDestDir);
+			tracef("_\t_\tsplit %s", s);
 			TagReturn[] allTags = getTags(gitDestDir, TagKind.all,
 					opts.options.libOptions);
+			tracef("_\t_\tallTags %s", allTags);
 			foreach(tag; allTags) {
-				tracef("\tbuild tag %s", tag);
+				tracef("_\t_\t_\tbuild tag %s", tag);
 				const ver = tag.getVersion();
 				if(s.ver.empty || s.ver == ver) {
-					tracef("\tactually build tag split %s", ver);
-					createWorkingTree(gitDestDir, tag, s.pkg,
-							opts.options.packageFolder,
-							opts.options.libOptions);
+					tracef("_\t_\t_\tactually build tag split %s destdir %s"
+							~ " packageFolder %s", ver, gitDestDir,
+							opts.options.packageFolder);
+					try {
+						createWorkingTree(gitDestDir, tag, s.pkg,
+								opts.options.packageFolder,
+								opts.options.libOptions);
+					} catch(Exception e) {
+						errorf("Failed to create working tree %s",
+								e.toString());
+					}
 				}
 			}
 		}
@@ -106,8 +121,6 @@ int main(string[] args) {
 }
 
 string getPackage(ref const(DubProxyFile) dpf, string pkg) {
-	import std.path : buildPath;
-
 	if(!dpf.pkgExists(pkg)) {
 		writefln!"No package '%s' exists in DubProxyFile '%s'"(pkg,
 				opts.options.proxyFile);
@@ -146,6 +159,19 @@ GetSplit splitGet(string str) {
 	} else {
 		ret.pkg = str[0 .. colon];
 		ret.ver = str[colon + 1 .. $];
+	}
+	return ret;
+}
+
+GetSplit splitLocal(string str) {
+	import std.string : indexOf;
+
+	GetSplit ret;
+	const colon = str.indexOf('/');
+	if(colon == -1) {
+		ret.pkg = str;
+	} else {
+		ret.pkg = str[colon + 1 .. $];
 	}
 	return ret;
 }

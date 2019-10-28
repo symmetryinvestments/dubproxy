@@ -25,6 +25,7 @@ struct DubProxyCliOptions {
 
 	bool cloneAll;
 	bool cloneAllNoTerminal;
+	bool genAllTags;
 }
 
 private DubProxyCliOptions __options;
@@ -131,7 +132,11 @@ GetoptResult parseOptions(ref string[] args) {
 
 		"v|verbose",
 		"Get some more output of what is going on",
-		&writeAbleOptions().libOptions.verbose,
+		&writeAbleOptions().verbose,
+
+		"genAllTags",
+		"Generate tags for all the things in the proxyfile",
+		&writeAbleOptions().genAllTags,
 		);
 
 	return helpInformation;

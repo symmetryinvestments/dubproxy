@@ -4,6 +4,7 @@ import std.array : empty;
 import std.algorithm.iteration : filter, splitter;
 import std.algorithm.searching : startsWith;
 import std.exception : enforce;
+import std.experimental.logger;
 import std.file : exists, isDir, mkdirRecurse, rmdirRecurse, getcwd, chdir,
 	   readText;
 import std.path : absolutePath, expandTilde;
@@ -124,7 +125,7 @@ TagReturn[] getTagsRemote(string path, const(TagKind) tk,
 }
 
 private TagReturn[] processTagData(string data, const(TagKind) tk) {
-	import std.algorithm.searching : canFind;
+	import std.algorithm.searching : canFind, count;
 
 	const kindFilter = tk == TagKind.branch ? "heads"
 		: tk == TagKind.pull ? "pull"
@@ -134,6 +135,7 @@ private TagReturn[] processTagData(string data, const(TagKind) tk) {
 	foreach(line; data.splitter("\n")
 			.filter!(line => !line.empty)
 			.filter!(line => !canFind(line, "^{}"))
+			.filter!(line => count(line, "/") == 2)
 			.filter!(line => kindFilter.empty || line.canFind(kindFilter)))
 	{
 		string[] lineSplit = line.split('\t');
@@ -195,6 +197,7 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 	const absDestDir = absolutePath(expandTilde(destDir));
 	const rsltPath = format!"%s/%s-%s/%s"(absDestDir, packageName, verTag,
 			packageName);
+	tracef("rsltPath %s", rsltPath);
 
 	const bool e = exists(rsltPath);
 	enforce(!e || options.ovrWTF == OverrideWorkTreeFolder.yes, format!(
