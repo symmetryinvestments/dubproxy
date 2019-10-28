@@ -8,6 +8,7 @@ import dubproxy.options : DubProxyOptions;
 struct DubProxyCliOptions {
 	import dubproxy.git : TagKind;
 	DubProxyOptions libOptions;
+	bool verbose;
 
 	bool mirrorCodeDlang;
 	string mirrorFilename = "code.json";
@@ -126,7 +127,11 @@ GetoptResult parseOptions(ref string[] args) {
 
 		"u|noUserInteraction",
 		"Run git without user interaction",
-		&writeAbleOptions().libOptions.noUserInteraction
+		&writeAbleOptions().libOptions.noUserInteraction,
+
+		"v|verbose",
+		"Get some more output of what is going on",
+		&writeAbleOptions().libOptions.verbose,
 		);
 
 	return helpInformation;

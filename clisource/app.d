@@ -1,6 +1,7 @@
 import std.array : empty;
 import std.stdio;
 import std.getopt;
+import std.experimental.logger;
 import std.file : exists;
 
 import dubproxy;
@@ -18,18 +19,25 @@ int main(string[] args) {
 		return 0;
 	}
 
+	if(options().verbose) {
+		globalLogLevel(LogLevel.trace);
+	}
+
 	if(opts.options.dummyDubProxy) {
+		tracef("dummyDubProxy %s", opts.options.dummyDubProxyPath);
 		DubProxyFile dpf;
 		dpf.insertPath("dummy", "https://does_not_exist.git");
 		toFile(dpf, opts.options.dummyDubProxyPath ~ "/dubproxy.json");
 	}
 
 	if(opts.options.mirrorCodeDlang) {
+		tracef("mirrorCodeDlang %s", opts.options.mirrorFilename);
 		DubProxyFile dpf = getCodeDlangOrgCopy();
 		toFile(dpf, opts.options.mirrorFilename);
 	}
 
 	if(!opts.options.showTagsPath.empty) {
+		tracef("showTags %s", opts.options.proxyFile);
 		TagReturn[] tags;
 		if(exists(opts.options.proxyFile)) {
 			DubProxyFile dpf = fromFile(opts.options.proxyFile);
@@ -55,6 +63,7 @@ int main(string[] args) {
 	}
 
 	if(opts.options.cloneAll || opts.options.cloneAllNoTerminal) {
+		tracef("cloneAll proxyfile %s", opts.options.proxyFile);
 		bool worked = true;
 		DubProxyFile dpf = fromFile(opts.options.proxyFile);
 		const len = dpf.packages.length;
@@ -75,13 +84,16 @@ int main(string[] args) {
 	if(!opts.options.packages.empty) {
 		DubProxyFile dpf = fromFile(opts.options.proxyFile);
 		foreach(it; opts.options.packages) {
+			tracef("build tag it %s", it);
 			const GetSplit s = splitGet(it);
 			const gitDestDir = getPackage(dpf, s.pkg);
 			TagReturn[] allTags = getTags(gitDestDir, TagKind.all,
 					opts.options.libOptions);
 			foreach(tag; allTags) {
+				tracef("\tbuild tag %s", tag);
 				const ver = tag.getVersion();
 				if(s.ver.empty || s.ver == ver) {
+					tracef("\tactually build tag split %s", ver);
 					createWorkingTree(gitDestDir, tag, s.pkg,
 							opts.options.packageFolder,
 							opts.options.libOptions);
