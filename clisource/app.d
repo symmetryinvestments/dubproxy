@@ -89,30 +89,34 @@ int main(string[] args) {
 		DubProxyFile dpf = fromFile(opts.options.proxyFile);
 		tracef("_\tpackages %s", dpf.packages);
 		foreach(key, value; dpf.packages) {
-			tracef("_\t_\tbuild tag it %s", key);
-			const gitDestDir = buildPath(opts.options.gitFolder, key);
-			tracef("_\t_\tgitDestDir %s", gitDestDir);
-			const GetSplit s = splitLocal(gitDestDir);
-			tracef("_\t_\tsplit %s", s);
-			TagReturn[] allTags = getTags(gitDestDir, TagKind.all,
-					opts.options.libOptions);
-			tracef("_\t_\tallTags %s", allTags);
-			foreach(tag; allTags) {
-				tracef("_\t_\t_\tbuild tag %s", tag);
-				const ver = tag.getVersion();
-				if(s.ver.empty || s.ver == ver) {
-					tracef("_\t_\t_\tactually build tag split %s destdir %s"
-							~ " packageFolder %s", ver, gitDestDir,
-							opts.options.packageFolder);
-					try {
-						createWorkingTree(gitDestDir, tag, s.pkg,
-								opts.options.packageFolder,
-								opts.options.libOptions);
-					} catch(Exception e) {
-						errorf("Failed to create working tree %s",
-								e.toString());
+			try {
+				tracef("_\t_\tbuild tag it %s", key);
+				const gitDestDir = buildPath(opts.options.gitFolder, key);
+				tracef("_\t_\tgitDestDir %s", gitDestDir);
+				const GetSplit s = splitLocal(gitDestDir);
+				tracef("_\t_\tsplit %s", s);
+				TagReturn[] allTags = getTags(gitDestDir, TagKind.all,
+						opts.options.libOptions);
+				tracef("_\t_\tallTags %s", allTags);
+				foreach(tag; allTags) {
+					tracef("_\t_\t_\tbuild tag %s", tag);
+					const ver = tag.getVersion();
+					if(s.ver.empty || s.ver == ver) {
+						tracef("_\t_\t_\tactually build tag split %s destdir %s"
+								~ " packageFolder %s", ver, gitDestDir,
+								opts.options.packageFolder);
+						try {
+							createWorkingTree(gitDestDir, tag, s.pkg,
+									opts.options.packageFolder,
+									opts.options.libOptions);
+						} catch(Exception e) {
+							errorf("Failed to create working tree %s",
+									e.toString());
+						}
 					}
 				}
+			} catch(Exception e) {
+				error(e.toString());
 			}
 		}
 	}
