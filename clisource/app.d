@@ -91,7 +91,7 @@ int main(string[] args) {
 		foreach(key, value; dpf.packages) {
 			try {
 				tracef("_\t_\tbuild tag it %s", key);
-				const gitDestDir = buildPath(opts.options.gitFolder, key);
+				const gitDestDir = buildPath(opts.options.packageFolder, key);
 				tracef("_\t_\tgitDestDir %s", gitDestDir);
 				const GetSplit s = splitLocal(gitDestDir);
 				tracef("_\t_\tsplit %s", s);
@@ -168,10 +168,10 @@ GetSplit splitGet(string str) {
 }
 
 GetSplit splitLocal(string str) {
-	import std.string : indexOf;
+	import std.string : lastIndexOf;
 
 	GetSplit ret;
-	const colon = str.indexOf('/');
+	const colon = str.lastIndexOf('/');
 	if(colon == -1) {
 		ret.pkg = str;
 	} else {
