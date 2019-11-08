@@ -7,7 +7,8 @@ import std.exception : enforce;
 import std.experimental.logger;
 import std.file : exists, isDir, mkdirRecurse, rmdirRecurse, getcwd, chdir,
 	   readText;
-import std.path : absolutePath, expandTilde;
+import std.path : absolutePath, expandTilde, asNormalizedPath,
+	   buildNormalizedPath;
 import std.stdio : File;
 import std.format : format;
 import std.process : executeShell;
@@ -164,7 +165,10 @@ void cloneBare(string path, const LocalGit lg, string destDir,
 				toExe, rslt.status, rslt.output));
 	}
 
-	const string absDestDir = absolutePath(expandTilde(destDir));
+	const string absDestDir = destDir.expandTilde()
+		.absolutePath()
+		.buildNormalizedPath();
+
 	const bool e = exists(absDestDir);
 
 	if(e && options.ovrGF == OverrideGitFolder.yes) {
@@ -193,12 +197,12 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 {
 	const ver = tag.getVersion();
 	const verTag = ver.startsWith("v") ? ver[1 .. $] : ver;
-	const absGitPath = absolutePath(expandTilde(clonedGitPath));
-	const absDestDir = absolutePath(expandTilde(destDir));
+	const absGitPath = buildNormalizedPath(absolutePath(expandTilde(clonedGitPath)));
+	const absDestDir = buildNormalizedPath(absolutePath(expandTilde(destDir)));
 	const rsltPath = format!"%s/%s-%s/%s"(absDestDir, packageName, verTag,
 			packageName);
-	tracef("rsltPath %s, absDestDir %s, packageName %s, verTag %s", rsltPath,
-			absDestDir, packageName, verTag);
+	tracef("rsltPath %s, absGitPath %s, absDestDir %s, packageName %s, verTag %s",
+			rsltPath, absGitPath, absDestDir, packageName, verTag);
 
 	const bool e = exists(rsltPath);
 	enforce(!e || options.ovrWTF == OverrideWorkTreeFolder.yes, format!(
@@ -213,16 +217,18 @@ void createWorkingTree(string clonedGitPath, const(TagReturn) tag,
 	const string cwd = getcwd();
 	scope(exit) {
 		chdir(cwd);
-		enforce(getcwd() == cwd, format!"Failed to paths to '%s' cwd '%s'"(cwd,
-				getcwd()));
+		enforce(getcwd() == cwd, format!
+			"Failed to change paths to '%s' cwd '%s'"(cwd, getcwd()));
 	}
 
+	tracef("chdir '%s'", absGitPath);
 	chdir(absGitPath);
 	enforce(getcwd() == absGitPath,
-			format!"Failed to paths to '%s'"(absGitPath));
+			format!"Failed change to paths to '%s'"(absGitPath));
 
 	const toExe = format!"%s worktree add -f %s %s"(options.pathToGit, rsltPath,
 			ver);
+	tracef("toExe '%s'", toExe);
 	auto rslt = executeShell(toExe);
 	enforce(rslt.status == 0, format!
 			"'%s' returned with '%d' 0 was expected output '%s'"(
@@ -258,7 +264,7 @@ void insertVersionIntoDubFile(string packageDir, string ver,
 
 void insertVersionIntoDubJsonFile(string fileName, string ver) {
 	import std.json : JSONValue, parseJSON;
-	fileName = absolutePath(expandTilde(fileName));
+	fileName = buildNormalizedPath(absolutePath(expandTilde(fileName)));
 	JSONValue j = parseJSON(readText(fileName));
 	j["version"] = ver;
 
@@ -271,7 +277,7 @@ void insertVersionIntoDubSDLFile(string fileName, string ver,
 		ref const(DubProxyOptions) options)
 {
 	import std.path : dirName;
-	const pth = dirName(absolutePath(expandTilde(fileName)));
+	const pth = dirName(buildNormalizedPath(absolutePath(expandTilde(fileName))));
 	const string cwd = getcwd();
 	scope(exit) {
 		chdir(cwd);

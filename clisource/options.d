@@ -135,7 +135,7 @@ GetoptResult parseOptions(ref string[] args) {
 		&writeAbleOptions().verbose,
 
 		"genAllTags",
-		"Generate tags for all the things in the proxyfile",
+		"Generate tags for all the repos in gitFolder listed in proxyFile",
 		&writeAbleOptions().genAllTags,
 		);
 
