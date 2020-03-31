@@ -84,7 +84,7 @@ int main(string[] args) {
 		}
 	}
 
-	if(!opts.options.proxyFile.empty || !opts.options.genAllTags) {
+	if(!opts.options.proxyFile.empty && opts.options.genAllTags) {
 		tracef("genTags proxyFile %s, gitFolder %s", opts.options.proxyFile,
 			opts.options.gitFolder);
 		DubProxyFile dpf = fromFile(opts.options.proxyFile);
