@@ -1,6 +1,8 @@
 import std.array : empty;
+import std.algorithm.searching : startsWith;
 import std.stdio;
 import std.getopt;
+import std.string : indexOf;
 import std.experimental.logger;
 import std.file : exists;
 import std.path : buildPath;
@@ -118,6 +120,44 @@ int main(string[] args) {
 				}
 			} catch(Exception e) {
 				error(e.toString());
+			}
+		}
+	}
+
+	if(!opts.options.proxyFile.empty && !opts.options.packages.empty) {
+		tracef("get %s", opts.options.packages);
+		DubProxyFile dpf = fromFile(opts.options.proxyFile);
+		foreach(pkg; opts.options.packages) {
+			GetSplit sp = pkg.indexOf(":") != -1
+				? splitGet(pkg)
+				: splitLocal(pkg);
+			sp.ver = !sp.ver.empty && !startsWith(sp.ver, "v")
+				? "v" ~ sp.ver
+				: sp.ver;
+
+			string gitDestDir = getPackage(dpf, sp.pkg);
+			tracef("path to cloned git '%s'", gitDestDir);
+			const GetSplit s = splitLocal(gitDestDir);
+			TagReturn[] allTags = getTags(gitDestDir, TagKind.all,
+					opts.options.libOptions);
+			tracef("_\t_\tallTags %s", allTags);
+			foreach(tag; allTags) {
+				tracef("_\t_\t_\tbuild tag %s", tag);
+				const ver = tag.getVersion();
+				tracef("_\t_\t_\tsp.ver %s == ver %s", sp.ver, ver);
+				if(sp.ver == ver) {
+					tracef("_\t_\t_\tactually build tag split %s destdir %s"
+							~ " packageFolder %s", ver, gitDestDir,
+							opts.options.packageFolder);
+					try {
+						createWorkingTree(gitDestDir, tag, s.pkg,
+								opts.options.packageFolder,
+								opts.options.libOptions);
+					} catch(Exception e) {
+						errorf("Failed to create working tree %s",
+								e.toString());
+					}
+				}
 			}
 		}
 	}
